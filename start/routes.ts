@@ -8,11 +8,13 @@
 */
 
 import router from '@adonisjs/core/services/router'
-import User from '../app/models/user.js';
-import { use } from 'chai';
+
+const UsersController = () => import('#controllers/users_controller')
 
 router.get('/', async () => {
   return {
     hello: 'world',
   }
 });
+
+router.post('/users', [UsersController, 'store']);
