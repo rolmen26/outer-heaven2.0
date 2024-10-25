@@ -1,0 +1,62 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${PORT:-3333}:3333"
+    volumes:
+      - .:/app
+    networks:
+      - adonis
+    depends_on:
+      - database
+    env_file:
+      - .env
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: adonis-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGMENT_PORT:-15672}:15672"
+    networks:
+      - adonis
+  
+  database:
+    image: postgres:15.6-alpine3.18
+    container_name: adonisjs-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-"root"}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-"secret"}
+      - POSTGRES_DB=${DB_DATABASE:-"adonis_db"}
+
+    volumes:
+      - /home/$USER/adonis/local_pgdata:/app/postgresql/data
+    networks:
+      - adonis
+
+  pgadmin:
+    image: dpage/pgadmin4:8.3
+    container_name: adonis-pgadmin
+    depends_on:
+      - database
+    ports:
+      - "${PGADMIN_PORT:-8888}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - /home/$USER/adonis/pgadmin-data:/app/pgadmin
+    networks:
+      - adonis
+
+networks:
+  adonis:
+    driver: bridge
